@@ -12,13 +12,12 @@ Circa backend is built on top of Dotnet Core 3.1 and React Front-end.
 * Vault
 * Consul
 * Elasticsearch
-* Greylog
 * Jaeger
 * Kibana
 * Prometheus
 * Grafana
 
 ## Planned Infrastructure Dependencies
+
 * RedHat Keycloak (sso authentication and authorization)
 * Apollo server (graph-ql)
-
