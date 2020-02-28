@@ -1,163 +1,200 @@
-version: '3'
+version: "3"
 services:
-    consul-bootstrap:
-        image: consul:1.7.1
-        hostname: "consul-bootstrap"
-        ports:
-          - 8500:8500
-          - 8443:8443
-          - 8400:8400
-          - 8301:8301
-          - 8301:8301/udp
-          - 8302:8302
-          - 8302:8301/udp
-          - 8300:8300
-          - 8600:8600
-        command: "agent -server -bootstrap -ui -client 0.0.0.0 -bind '{{ GetInterfaceIP \"eth0\" }}'"
-        networks:
-          - circa
+  # consul-bootstrap:
+  #     image: consul:1.7.1
+  #     hostname: "consul-bootstrap"
+  #     ports:
+  #       - 8500:8500
+  #       - 8443:8443
+  #       - 8400:8400
+  #       - 8301:8301
+  #       - 8301:8301/udp
+  #       - 8302:8302
+  #       - 8302:8301/udp
+  #       - 8300:8300
+  #       - 8600:8600
+  #     command: "agent -server -bootstrap -ui -client 0.0.0.0 -bind '{{ GetInterfaceIP \"eth0\" }}'"
+  #     networks:
+  #       - circa
 
-    consul-server:
-      hostname: "consul-server"
-      image: consul:1.7.1
-      command: "agent -server -retry-join consul-bootstrap -client 0.0.0.0 -bind '{{ GetInterfaceIP \"eth0\" }}'"
-      depends_on:
-        - consul-bootstrap
-      volumes:
-        - consul_data:/consul/data
-      networks:
-        - circa
+  # consul-server:
+  #   hostname: "consul-server"
+  #   image: consul:1.7.1
+  #   command: "agent -server -retry-join consul-bootstrap -client 0.0.0.0 -bind '{{ GetInterfaceIP \"eth0\" }}'"
+  #   depends_on:
+  #     - consul-bootstrap
+  #   volumes:
+  #     - consul_data:/consul/data
+  #   networks:
+  #     - circa
 
-    consul-client:
-      image: consul:1.7.1
-      command: "agent -retry-join consul-bootstrap -client 0.0.0.0 -bind '{{ GetInterfaceIP \"eth0\" }}'"
-      depends_on:
-        - consul-bootstrap
-      networks:
-        - circa
+  # consul-client:
+  #   image: consul:1.7.1
+  #   command: "agent -retry-join consul-bootstrap -client 0.0.0.0 -bind '{{ GetInterfaceIP \"eth0\" }}'"
+  #   depends_on:
+  #     - consul-bootstrap
+  #   networks:
+  #     - circa
 
+  # vault:
+  #     depends_on:
+  #       - consul-server
+  #     image: vault:latest
+  #     hostname: "vault"
+  #     restart: always
+  #     cap_add:
+  #       - IPC_LOCK
+  #       - ALL
+  #     ports:
+  #       - 8200:8200
+  #     environment:
+  #       VAULT_LOCAL_CONFIG: '{"backend": {"consul": {"address": "consul-bootstrap:8500", "path": "vault/"}}, "listener": {"tcp": {"address": "0.0.0.0:8200", "tls_disable": "1"}}, "default_lease_ttl": "24h", "ui":true, "max_lease_ttl": "720h", "disable_mlock":true}'
+  #       VAULT_ADDR: '0.0.0.0:8200'
+  #     command:
+  #       - server
+  #     ulimits:
+  #       nproc: 65535
+  #     privileged: true
+  #     networks:
+  #       - circa
+  mongo:
+    image: mongo:4.2.3-bionic
+    ports:
+      - 27017:27017
+    networks:
+      - circa
+    volumes:
+      - mongo_data:/data/db
 
-    vault:
-        depends_on:
-          - consul-server
-        image: vault:latest
-        hostname: "vault"
-        restart: always
-        cap_add:
-          - IPC_LOCK
-          - ALL
-        ports:
-          - 8200:8200
-        environment:
-          VAULT_LOCAL_CONFIG: '{"backend": {"consul": {"address": "consul-bootstrap:8500", "path": "vault/"}}, "listener": {"tcp": {"address": "0.0.0.0:8200", "tls_disable": "1"}}, "default_lease_ttl": "24h", "ui":true, "max_lease_ttl": "720h", "disable_mlock":true}'
-          VAULT_ADDR: '0.0.0.0:8200'
-        command:
-          - server
-        ulimits:
-          nproc: 65535
-        privileged: true
-        networks:
-          - circa
-    mongo:
-      image: mongo:latest
-      ports:
-        - 27017:27017
-      networks:
-        - circa
-      volumes:
-        - mongo_data:/data/db
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.0
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      - discovery.type=single-node
+      - http.host=0.0.0.0
+      - transport.host=localhost
+      - network.host=0.0.0.0
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - circa
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
 
-    elasticsearch:
-      image: docker.elastic.co/elasticsearch/elasticsearch:7.6.0
-      ports:
-        - 9200:9200
-        - 9300:9300
-      environment:
-        - discovery.type=single-node
-        - http.host=0.0.0.0
-        - transport.host=localhost
-        - network.host=0.0.0.0
-        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      ulimits:
-        memlock:
-          soft: -1
-          hard: -1
-      networks:
-        - circa
-      volumes:
-        - es_data:/usr/share/elasticsearch/data
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.6.0
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - 5601:5601
+    networks:
+      - circa
+    depends_on:
+      - elasticsearch
 
-    kibana:
-      image: docker.elastic.co/kibana/kibana:7.6.0
-      environment:
-        - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      ports:
-       - 5601:5601
-      networks:
-        - circa
-      depends_on:
-        - elasticsearch
+  jaeger-collector:
+   image: jaegertracing/jaeger-collector
+   ports:
+     - "14269:14269"
+     - "14268:14268"
+     - "14267:14267"
+     - "9411:9411"
+   networks:
+     - circa
+   restart: on-failure
+   environment:
+     - SPAN_STORAGE_TYPE=elasticsearch
+   command: [
+     "--es.server-urls=http://elasticsearch:9200",
+     "--es.num-shards=1",
+     "--es.num-replicas=0",
+     "--log-level=error"
+   ]
+   depends_on:
+     - elasticsearch
 
-    jaeger:
-      hostname: 'jaeger'
-      image: jaegertracing/all-in-one:1.17.0
-      environment:
-        - SPAN_STORAGE_TYPE=elasticsearch
-        - ES_SERVER_URLS=http://elasticsearch:9200
-        - ES_TAGS_AS_FIELDS_ALL=true
-      ports:
-        # Thrift compact
-        - 6831:6831
-        # UI port
-        - 16686:16686
-      depends_on:
-        - elasticsearch
-      networks:
-        - circa
+  jaeger-agent:
+    image: jaegertracing/jaeger-agent
+    hostname: jaeger-agent
+    command: ["--collector.host-port=jaeger-collector:14267"]
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+    networks:
+      - circa
+    restart: on-failure
+    environment:
+      - SPAN_STORAGE_TYPE=elasticsearch
+    depends_on:
+      - jaeger-collector
 
-    # grafana:
-    #   hostname: 'grafana'
-    #   image: grafana/grafana
-    #   container_name: grafana
-    #   restart: unless-stopped
-    #   ports:
-    #     - 3000:3000
-    #   networks:
-    #     - circa
-    #   volumes:
-    #     - grafana:/var/lib/grafana
+  jaeger-query:
+    image: jaegertracing/jaeger-query
+    environment:
+      - SPAN_STORAGE_TYPE=elasticsearch
+      - no_proxy=localhost
+    ports:
+      - "16686:16686"
+      - "16687:16687"
+    networks:
+      - circa
+    restart: on-failure
+    command: [
+      "--es.server-urls=http://elasticsearch:9200",
+      "--span-storage.type=elasticsearch",
+      "--log-level=debug"
+    ]
+    depends_on:
+      - jaeger-agent
 
-    # prometheus:
-    #   hostname: 'prometheus'
-    #   build: ./prometheus
-    #   restart: unless-stopped
-    #   ports:
-    #     - '9090:9090'
-    #   networks:
-    #     - circa
-    #   volumes:
-    #     - prometheus:/prometheus
-    redis:
-      hostname: 'redis'
-      image: redis
-      container_name: redis
-      restart: unless-stopped
-      networks:
-        - circa
-      ports:
-        - 6379:6379
-      volumes:
-        - redis:/data
-
-    rabbitmq:
-      hostname: 'rabbitmq'
-      image: rabbitmq:3-management
-      ports:
-          - 25676:25676
-          - 5672:5672
-          - 15672:15672
-      volumes:
-          - rabbit_data:/var/lib/rabbitmq
+  # grafana:
+  #   hostname: 'grafana'
+  #   image: grafana/grafana
+  #   container_name: grafana
+  #   restart: unless-stopped
+  #   ports:
+  #     - 3000:3000
+  #   networks:
+  #     - circa
+  #   volumes:
+  #     - grafana:/var/lib/grafana
+  # prometheus:
+  #   hostname: 'prometheus'
+  #   build: ./prometheus
+  #   restart: unless-stopped
+  #   ports:
+  #     - '9090:9090'
+  #   networks:
+  #     - circa
+  #   volumes:
+  #     - prometheus:/prometheus
+  # redis:
+  #   hostname: 'redis'
+  #   image: redis
+  #   container_name: redis
+  #   restart: unless-stopped
+  #   networks:
+  #     - circa
+  #   ports:
+  #     - 6379:6379
+  #   volumes:
+  #     - redis:/data
+  # rabbitmq:
+  #   hostname: 'rabbitmq'
+  #   image: rabbitmq:3-management
+  #   ports:
+  #       - 25676:25676
+  #       - 5672:5672
+  #       - 15672:15672
+  #   volumes:
+  #       - rabbit_data:/var/lib/rabbitmq
 
 networks:
   circa:
