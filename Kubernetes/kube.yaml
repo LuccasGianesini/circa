@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: apm-server
+  name: apm-server
+  namespace: apm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apm-server
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: apm-server
+    spec:
+      containers:
+      - image: docker.elastic.co/apm/apm-server:6.3.1
+        imagePullPolicy: IfNotPresent
+        name: apm-server
+        ports:
+        - containerPort: 8200
+          name: http
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /usr/share/apm-server/apm-server.yml
+          name: apm-server-config
+      volumes:
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: nginx.conf
+            mode: 438
+            path: nginx.conf
+          name: efk-kibana-nginx
+        name: kibana-nginx
