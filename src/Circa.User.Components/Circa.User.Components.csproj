@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Circa.User.Contracts\Circa.User.Contracts.csproj" />
+      <ProjectReference Include="..\..\Solari.User.Infra\Solari.User.Infra.csproj" />
+      <ProjectReference Include="..\Circa.Shared.Contracts\Circa.Shared.Contracts.csproj" />
+      <ProjectReference Include="..\Circa.Shared.Domain\Circa.Shared.Domain.csproj" />
+      <ProjectReference Include="..\Circa.User.Domain\Circa.User.Domain.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Circa.User.IoC\Circa.User.IoC.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="NSwag.Annotations" Version="13.6.2" />
+      <PackageReference Include="NSwag.AspNetCore" Version="13.6.2" />
+    </ItemGroup>
+
+
+</Project>

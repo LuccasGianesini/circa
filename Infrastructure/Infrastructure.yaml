@@ -1,0 +1,131 @@
+version: "3"
+services:
+  consul:
+    image: consul
+    container_name: consul
+    restart: unless-stopped
+    networks:
+      - circa
+    ports:
+      - 8500:8500
+    volumes:
+      - consul_data:/consul/data
+
+  vault:
+    depends_on:
+      - consul
+    image: vault:latest
+    container_name: vault
+    restart: unless-stopped
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - 8200:8200
+    environment:
+      VAULT_LOCAL_CONFIG: '{"backend": {"consul": {"address": "consul:8500", "path": "vault/"}}, "listener": {"tcp": {"address": "0.0.0.0:8200", "tls_disable": "1"}}, "default_lease_ttl": "24h", "ui":true, "max_lease_ttl": "720h", "disable_mlock":true}'
+      VAULT_ADDR: '0.0.0.0:8200'
+    command:
+      - server
+    ulimits:
+      nproc: 65535
+    privileged: true
+    networks:
+      - circa
+  
+  mongo:
+    image: mongo:4.2.3-bionic
+    container_name: mongo
+    ports:
+      - 27017:27017
+    networks:
+      - circa
+    volumes:
+      - mongo_data:/data/db
+
+  jaeger:
+    image: jaegertracing/all-in-one
+    container_name: jaeger
+    restart: unless-stopped
+    networks:
+      - circa
+    ports:
+      - 5775:5775/udp
+      - 5778:5778
+      - 6831:6831/udp
+      - 6832:6832/udp
+      - 9411:9411
+      - 14268:14268
+      - 16686:16686
+  
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    networks:
+      - circa
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+  
+  loki:
+    build: ./Loki
+    container_name: loki
+    restart: unless-stopped
+    networks:
+      - circa
+    ports:
+      - 3100:3100
+
+
+  prometheus:
+    build: ./Prometheus
+    container_name: prometheus
+    restart: unless-stopped
+    networks:
+      - circa
+    ports:
+      - 9090:9090
+    volumes:
+      - prometheus_data:/prometheus
+  
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    networks:
+      - circa
+    ports:
+      - 5672:5672
+      - 15672:15672
+      - 15692:15692
+    volumes: 
+      - rabbit_data:/var/lib/rabbitmq
+  
+  redis:
+    image: redis
+    container_name: redis
+    restart: unless-stopped
+    networks:
+      - circa
+    ports:
+      - 6379:6379
+    volumes: 
+      - redis_data:/data
+
+networks:
+  circa:
+    driver: bridge
+volumes:
+  mongo_data:
+    driver: local  
+  consul_data:
+    driver: local
+  grafana_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  redis_data:
+    driver: local
+  rabbit_data:
+    driver: local

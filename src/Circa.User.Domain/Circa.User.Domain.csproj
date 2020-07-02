@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Circa.Shared.Domain\Circa.Shared.Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MassTransit" Version="7.0.0" />
+      <PackageReference Include="MassTransit.Analyzers" Version="7.0.0" />
+      <PackageReference Include="MassTransit.AspNetCore" Version="7.0.0" />
+      <PackageReference Include="MassTransit.RabbitMQ" Version="7.0.0" />
+      <PackageReference Include="Solari.Callisto" Version="1.10.15" />
+      <PackageReference Include="Solari.Callisto.Integrations.MassTransit" Version="1.10.15" />
+      <PackageReference Include="Solari.Callisto.Tracer" Version="1.10.15" />
+      <PackageReference Include="Solari.Deimos" Version="1.10.15" />
+      <PackageReference Include="Solari.Hyperion.ConfigurationProvider" Version="1.10.15" />
+      <PackageReference Include="Solari.Juno" Version="1.10.15" />
+      <PackageReference Include="Solari.Oberon" Version="1.10.15" />
+      <PackageReference Include="Solari.Titan" Version="1.10.15" />
+      <PackageReference Include="Solari.Titan.Loki" Version="1.10.15" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="UserProfile\Dtos" />
+      <Folder Include="UserProfile\Outputs" />
+    </ItemGroup>
+
+</Project>
